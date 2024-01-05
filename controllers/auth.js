@@ -11,7 +11,7 @@ const db = mysql.createConnection({
 exports.register = (req,res) => {
     console.log(req.body);
     const { name, email, password, passwordConfirm } = req.body;
-    db.query('select email from users where email = ?',[email],(error,results) => {
+    db.query('select email from users where email = ?',[email],async (error,results) => {
         if(error){
             console.log(error);
         }
@@ -26,7 +26,41 @@ exports.register = (req,res) => {
                 message: 'Passwords do not match'
             })
         }
+
+        let hashedPassword = await bcrypt.hash(password,8)
+        console.log(hashedPassword);
+
+        db.query('insert into users set ?',{name:name, email:email, password:hashedPassword},(error,results)=>{
+                    if(error)
+                    {
+                        console.log(error);
+                    } else{
+                        return res.render('register',{
+                            message:'user registered'
+                        })
+                    }
+        })
     });
 
-    res.send("Form Submitted")
+}
+
+exports.login = (req,res) => {
+    console.log(req.body);
+    const { username , password } = req.body;
+    db.query('select email,password from users where email = ?',[username],async (error,results) => {        
+        if(error){
+            console.log(error);
+        }
+        if(results.length>0)
+        {
+            return res.render('login',{
+                message: 'Successfully login'
+            })
+        }
+        else{
+            return res.render('login',{
+                message: 'Invalid credentials'
+            })
+        }
+    });
 }
